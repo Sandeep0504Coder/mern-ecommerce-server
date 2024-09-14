@@ -139,7 +139,7 @@ export const updateProduct = TryCatch( async( req, res, next ) => {
     if( name ) product.name = name;
     if( category ) product.category = category;
     if( price ) product.price = price;
-    if( stock ) product.stock = product.stock > 0 ? product.stock + Number( stock ) : stock;
+    if( stock ) product.stock = stock;
     if( description ) product.description = description;
 
     await product.save();
