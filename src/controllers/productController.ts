@@ -3,9 +3,8 @@ import { TryCatch } from "../middlewares/error.js";
 import { BaseQuery, NewProductRequestBody, SearchRequestQuery } from "../types/types.js";
 import { Product } from "../models/productModel.js";
 import ErrorHandler from "../utils/utility-class.js";
-import { rm } from "fs";
 import { myCache } from "../app.js";
-import { invalidateCache } from "../utils/features.js";
+import { deleteFromCloudinary, invalidateCache, uploadToCloudinary } from "../utils/features.js";
 
 //Revalidate on new, update, delete product & on new order
 export const getLatestProducts = TryCatch( async( req, res, next ) => {
@@ -89,16 +88,20 @@ export const getProductDetails = TryCatch( async( req, res, next ) => {
 
 export const createProduct = TryCatch( async( req: Request<{}, {}, NewProductRequestBody>, res, next ) => {
     const { name, category, price, stock, description } = req.body;
-    const photo = req.file;
+    const photos = req.files as Express.Multer.File[] | undefined;
 
-    if( !photo ) return next( new ErrorHandler( "Please add photo", 400 ) );
+    if( !photos ) return next( new ErrorHandler( "Please add photo", 400 ) );
 
-    if( !name || !price || !stock || !category ){
-        rm( photo.path, () => {
-            console.log( "Deleted" );
-        } )
+    if( photos.length < 1 ) return next( new ErrorHandler( "Please add atlease one Photo", 400 ) );
+    if( photos.length > 5 ) return next( new ErrorHandler( "You can only upload 5 photos", 400 ) );
+
+    if( !name || !price || !stock || !description || !category ){
         return next( new ErrorHandler( "Please enter all fields", 400 ) );
     }
+
+    // Upload Here
+
+    const photosURL = await uploadToCloudinary( photos );
 
     await Product.create( {
         name,
@@ -106,7 +109,7 @@ export const createProduct = TryCatch( async( req: Request<{}, {}, NewProductReq
         price,
         stock,
         description,
-        photo: photo.path
+        photos: photosURL
     } );
 
     invalidateCache( { product: true, admin: true } );
@@ -122,18 +125,23 @@ export const createProduct = TryCatch( async( req: Request<{}, {}, NewProductReq
 export const updateProduct = TryCatch( async( req, res, next ) => {
     const { id } = req.params;
     const { name, category, price, stock, description } = req.body;
-    const photo = req.file;
+    const photos = req.files as Express.Multer.File[] | undefined;
 
     const product = await Product.findById( id );
 
     if( !product ) return next( new ErrorHandler( "Product not found", 404 ) );
 
-    if( photo ){
-        rm( product.photo, () => {
-            console.log( "Old photo Deleted" );
-        } );
+    if( photos ){
+        const photosURL = await uploadToCloudinary( photos );
+        
+        await deleteFromCloudinary( product.photos.map( ( photo ) => photo.public_id ) );
 
-        product.photo = photo.path;
+        for( let i = 0; i < product.photos.length; i++ ){
+            product.photos.pop();
+        }
+        photosURL.forEach( ( photoURL ) => {
+            product.photos.push( photoURL );
+        } );
     }
 
     if( name ) product.name = name;
@@ -160,9 +168,7 @@ export const deleteProduct = TryCatch( async( req, res, next ) => {
 
     if( !product ) return next( new ErrorHandler( "Product not found", 404 ) );
 
-    rm( product.photo, () => {
-        console.log( "Product photo Deleted" );
-    } );
+    await deleteFromCloudinary( product.photos.map( ( photo ) => photo.public_id ) );
 
     await Product.findByIdAndDelete( id );
     

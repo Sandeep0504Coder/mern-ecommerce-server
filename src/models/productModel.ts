@@ -6,10 +6,18 @@ const productSchema = new mongoose.Schema(
             type: String,
             required: [ true, "Product Name is required!" ],
         },
-        photo: {
-            type: String,
-            required: [ true, "Product photo is required!" ],
-        },
+        photos: [
+            {
+                public_id: {
+                    type: String,
+                    required: [ true, "Please enter public id!" ],
+                },
+                url: {
+                    type: String,
+                    required: [ true, "Please enter url!" ],
+                }
+            }
+        ],
         category: {
             type: String,
             required: [ true, "Product category is required!" ],
@@ -23,7 +31,10 @@ const productSchema = new mongoose.Schema(
             type: Number,
             required: [ true, "Product stock is required!" ],
         },
-        description: String,
+        description: {
+            type: String,
+            required: [ true, "Product description is required!" ]
+        },
     },
     {
         timestamps: true,
