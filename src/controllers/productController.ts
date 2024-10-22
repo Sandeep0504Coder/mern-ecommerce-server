@@ -131,7 +131,7 @@ export const updateProduct = TryCatch( async( req, res, next ) => {
 
     if( !product ) return next( new ErrorHandler( "Product not found", 404 ) );
 
-    if( photos ){
+    if( photos && photos.length > 0 ){
         const photosURL = await uploadToCloudinary( photos );
         
         await deleteFromCloudinary( product.photos.map( ( photo ) => photo.public_id ) );
