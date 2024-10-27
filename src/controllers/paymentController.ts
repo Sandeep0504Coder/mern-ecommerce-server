@@ -32,6 +32,39 @@ export const createCoupon = TryCatch( async( req, res, next ) => {
     } );
 } );
 
+export const updateCoupon = TryCatch( async( req, res, next ) => {
+    const { id } = req.params;
+    const { amount } = req.body;
+
+    const coupon = await Coupon.findById( id );
+
+    if( !coupon ) return next( new ErrorHandler( "Coupon not found", 404 ) );
+
+    if( amount ) coupon.amount = amount;
+
+    await coupon.save( );
+
+    return res.status(200).json( {
+        success: true,
+        message: `Coupon ${coupon.code} updated successfully`,
+    } );
+} );
+
+export const getCouponDetails = TryCatch( async( req, res, next ) => {
+    const { id } = req.params;
+
+    const coupon = await Coupon.findById( id );
+    
+    if( !coupon ) return next( new ErrorHandler( "Coupon not found", 404 ) );
+
+    return res.status( 200 ).json(
+        {
+            success: true,
+            coupon,
+        }
+    );
+} );
+
 export const applyDiscount = TryCatch( async( req, res, next ) => {
     const { coupon } = req.query;
 

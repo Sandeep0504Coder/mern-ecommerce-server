@@ -1,6 +1,6 @@
 import express from "express";
 import { adminOnly } from "../middlewares/auth.js";
-import { allCoupons, applyDiscount, createCoupon, createPaymentIntent, deleteCoupon } from "../controllers/paymentController.js";
+import { allCoupons, applyDiscount, createCoupon, createPaymentIntent, deleteCoupon, getCouponDetails, updateCoupon } from "../controllers/paymentController.js";
 
 const app = express.Router();
 
@@ -17,6 +17,6 @@ app.post( "/coupon/new", adminOnly, createCoupon );
 app.get( "/coupon/all", adminOnly, allCoupons );
 
 //route - api/v1/payment/coupon/:id
-app.route( "/coupon/:id" ).delete( adminOnly, deleteCoupon );
+app.route( "/coupon/:id" ).get( adminOnly, getCouponDetails ).delete( adminOnly, deleteCoupon ).put( adminOnly, updateCoupon );
 
 export default app;
