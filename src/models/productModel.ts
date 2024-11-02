@@ -35,6 +35,14 @@ const productSchema = new mongoose.Schema(
             type: String,
             required: [ true, "Product description is required!" ]
         },
+        ratings: {
+            type: Number,
+            default: 0,
+        },
+        numOfReviews: {
+            type: Number,
+            default: 0,
+        },
     },
     {
         timestamps: true,

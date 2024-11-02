@@ -4,7 +4,9 @@ import { BaseQuery, NewProductRequestBody, SearchRequestQuery } from "../types/t
 import { Product } from "../models/productModel.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { myCache } from "../app.js";
-import { deleteFromCloudinary, invalidateCache, uploadToCloudinary } from "../utils/features.js";
+import { deleteFromCloudinary, findAverageRatings, invalidateCache, uploadToCloudinary } from "../utils/features.js";
+import { Review } from "../models/reviewModel.js";
+import { User } from "../models/userModel.js";
 
 //Revalidate on new, update, delete product & on new order
 export const getLatestProducts = TryCatch( async( req, res, next ) => {
@@ -220,6 +222,103 @@ export const getAllProducts = TryCatch( async( req: Request<{},{},{},SearchReque
             success: true,
             products,
             totalPage,
+        }
+    );
+} );
+
+export const allReviewsOfProduct = TryCatch( async( req, res, next ) => {
+    let reviews = await Review.find( {
+        product: req.params.id
+    } ).populate( "user", "name photo" ).sort( { updatedAt: -1 } );
+
+    return res.status( 200 ).json(
+        {
+            success: true,
+            reviews
+        }
+    );
+} );
+
+export const addEditReview = TryCatch( async( req, res, next ) => {
+    const user = await User.findById( req.query.id );
+
+    if( !user ) return next( new ErrorHandler( "Not logged in", 404 ) );
+
+    const product = await Product.findById( req.params.id );
+
+    if( !product ) return next( new ErrorHandler( "Product not found", 404 ) );
+
+    const { comment, rating } = req.body;
+
+    let alreadyReviewed = await Review.findOne( {
+        user: user._id,
+        product: product._id
+    } );
+
+    if( alreadyReviewed ){
+        if( comment ) alreadyReviewed.comment = comment;
+
+        if( rating ) alreadyReviewed.rating = rating;
+        
+        await alreadyReviewed.save( );
+    } else {
+        await Review.create( {
+            comment,
+            rating,
+            user: user._id,
+            product: product._id
+        } );
+    }
+
+    const { ratings, numberOfReviews } = await findAverageRatings( product._id );
+
+    product.ratings =ratings;
+    product.numOfReviews = numberOfReviews;
+
+    await product.save( );
+
+    invalidateCache( { product: true, productIdArray: [ String( product._id ) ], admin: true } );
+
+    return res.status( alreadyReviewed ? 200 : 201 ).json(
+        {
+            success: true,
+            message: alreadyReviewed ? "Review updated" : "Review added"
+        }
+    );
+} );
+
+export const deleteReview = TryCatch( async( req, res, next ) => {
+    const user = await User.findById( req.query.id );
+
+    if( !user ) return next( new ErrorHandler( "Not logged in", 404 ) );
+
+    const review = await Review.findById( req.params.id );
+
+    if( !review ) return next( new ErrorHandler( "Review not found", 404 ) );
+
+    const isAuthenticUser = review.user.toString( ) === user._id.toString( );
+
+    if( !isAuthenticUser ) return next( new ErrorHandler( "Not Authorized", 401 ) );
+    
+    await review.deleteOne( );
+
+    const product = await Product.findById( review.product );
+
+    if( !product ) return next( new ErrorHandler( "Product not found", 404 ) );
+
+    const { ratings, numberOfReviews } = await findAverageRatings( product._id );
+
+    product.ratings =ratings;
+    product.numOfReviews = numberOfReviews;
+
+    await product.save( );
+
+    invalidateCache( { product: true, productIdArray: [ String( product._id ) ], admin: true } );
+
+    return res.status( 200 ).json(
+        {
+            success: true,
+            message: "Review Deleted"
         }
     );
 } );
