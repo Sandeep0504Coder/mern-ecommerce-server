@@ -7,6 +7,8 @@ import { myCache } from "../app.js";
 import { deleteFromCloudinary, findAverageRatings, invalidateCache, uploadToCloudinary } from "../utils/features.js";
 import { Review } from "../models/reviewModel.js";
 import { User } from "../models/userModel.js";
+import { ObjectId } from "mongoose";
+import { Types } from "mongoose";
 
 //Revalidate on new, update, delete product & on new order
 export const getLatestProducts = TryCatch( async( req, res, next ) => {
@@ -72,7 +74,7 @@ export const getProductDetails = TryCatch( async( req, res, next ) => {
     if( myCache.has( `product-${id}` ) ){
         product = JSON.parse( myCache.get( `product-${id}` ) as string );
     } else {
-        product = await Product.findById( id );
+        product = await Product.findById( id ).populate( "suggestedItems.productId", "_id name category price stock photos" );
         
         if( !product ) return next( new ErrorHandler( "Product not found", 404 ) );
         
@@ -160,6 +162,46 @@ export const updateProduct = TryCatch( async( req, res, next ) => {
         {
             success: true,
             message: "Product updated Successfully"
+        }
+    );
+} );
+
+export const manageProductRecommendation = TryCatch( async( req, res, next ) => {
+    const { id } = req.params;
+    const { suggestedProductIds } = req.body;
+console.log( suggestedProductIds )
+    const product = await Product.findById( id );
+
+    if( !product ) return next( new ErrorHandler( "Product not found", 404 ) );
+
+    if( suggestedProductIds && suggestedProductIds.length > 0 ){
+        const suggestedProductIdsArray = suggestedProductIds.split( "," );
+
+        suggestedProductIdsArray.forEach( ( suggestedItemId: string ) => {
+            if( product.suggestedItems.find( ( suggestedItem ) => suggestedItem.productId == suggestedItemId ) === undefined ){
+                product.suggestedItems.push( { productId: suggestedItemId } );
+            }
+        } );
+
+        product.suggestedItems.forEach( ( item, index ) => {
+            if( !suggestedProductIdsArray.includes( item.productId.toString( ) ) ){
+              product.suggestedItems.splice( index, 1 );
+            }
+        } );
+    } else {
+        for( let i = 0; i < product.suggestedItems.length; i++ ){
+            product.suggestedItems.pop( );
+        }
+    }
+
+    await product.save( );
+
+    invalidateCache( { product: true, productIdArray: [ String( product._id ) ], admin: true } );
+
+    return res.status( 200 ).json(
+        {
+            success: true,
+            message: "Product suggestion updated Successfully"
         }
     );
 } );

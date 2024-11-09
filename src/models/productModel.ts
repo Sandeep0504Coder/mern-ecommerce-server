@@ -43,6 +43,15 @@ const productSchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
+        suggestedItems: [
+            {
+                productId: {
+                    type: mongoose.Types.ObjectId,
+                    ref: "Product",
+                    required: true
+                }
+            }
+        ]
     },
     {
         timestamps: true,

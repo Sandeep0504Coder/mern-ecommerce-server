@@ -1,6 +1,6 @@
 import express from "express";
 import { adminOnly } from "../middlewares/auth.js";
-import { addEditReview, allReviewsOfProduct, createProduct, deleteProduct, deleteReview, getAdminProducts, getAllProducts, getLatestProducts, getProductCategories, getProductDetails, updateProduct } from "../controllers/productController.js";
+import { addEditReview, allReviewsOfProduct, createProduct, deleteProduct, deleteReview, getAdminProducts, getAllProducts, getLatestProducts, getProductCategories, getProductDetails, manageProductRecommendation, updateProduct } from "../controllers/productController.js";
 import { multiUpload } from "../middlewares/multer.js";
 
 const app = express.Router();
@@ -25,5 +25,6 @@ app.route( "/:id" ).get( getProductDetails ).put( adminOnly, multiUpload, update
 app.get( "/reviews/:id", allReviewsOfProduct );
 app.post( "/review/new/:id", addEditReview );
 app.delete( "/review/:id", deleteReview );
+app.put( "/manage-recommendations/:id", adminOnly, manageProductRecommendation );
 
 export default app;
