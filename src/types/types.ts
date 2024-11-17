@@ -21,6 +21,7 @@ export interface NewProductRequestBody {
     price: number;
     stock: number;
     description: string;
+    variants: string;
 }
 
 export type SearchRequestQuery = {

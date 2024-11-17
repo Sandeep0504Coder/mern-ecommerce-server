@@ -51,7 +51,25 @@ const productSchema = new mongoose.Schema(
                     required: true
                 }
             }
-        ]
+        ],
+        variants: [
+            {
+                configuration: [
+                    {
+                        key: { type: String, required: true },   // e.g., "RAM", "Color"
+                        value: { type: String, required: true }  // e.g., "4GB", "Red"
+                    }
+                ],
+                price: {
+                    type: Number,
+                    required: [true, "Variant price is required!"],
+                },
+                stock: {
+                    type: Number,
+                    required: [true, "Variant stock is required!"],
+                }
+            }
+        ],
     },
     {
         timestamps: true,

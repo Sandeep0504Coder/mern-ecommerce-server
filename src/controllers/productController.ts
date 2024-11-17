@@ -74,7 +74,7 @@ export const getProductDetails = TryCatch( async( req, res, next ) => {
     if( myCache.has( `product-${id}` ) ){
         product = JSON.parse( myCache.get( `product-${id}` ) as string );
     } else {
-        product = await Product.findById( id ).populate( "suggestedItems.productId", "_id name category price stock photos" );
+        product = await Product.findById( id ).populate( "suggestedItems.productId", "_id name category price stock photos variants" );
         
         if( !product ) return next( new ErrorHandler( "Product not found", 404 ) );
         
@@ -93,6 +93,8 @@ export const getProductDetails = TryCatch( async( req, res, next ) => {
 export const createProduct = TryCatch( async( req: Request<{}, {}, NewProductRequestBody>, res, next ) => {
     const { name, category, price, stock, description } = req.body;
     const photos = req.files as Express.Multer.File[] | undefined;
+    // Parse the variants string
+    const variants = JSON.parse( req.body.variants );
 
     if( !photos ) return next( new ErrorHandler( "Please add photo", 400 ) );
 
@@ -113,7 +115,8 @@ export const createProduct = TryCatch( async( req: Request<{}, {}, NewProductReq
         price,
         stock,
         description,
-        photos: photosURL
+        photos: photosURL,
+        variants,
     } );
 
     invalidateCache( { product: true, admin: true } );
@@ -130,6 +133,8 @@ export const updateProduct = TryCatch( async( req, res, next ) => {
     const { id } = req.params;
     const { name, category, price, stock, description } = req.body;
     const photos = req.files as Express.Multer.File[] | undefined;
+    // Parse the variants string
+    const variants = JSON.parse( req.body.variants );
 
     const product = await Product.findById( id );
 
@@ -153,6 +158,7 @@ export const updateProduct = TryCatch( async( req, res, next ) => {
     if( price ) product.price = price;
     if( stock ) product.stock = stock;
     if( description ) product.description = description;
+    if( variants ) product.variants = variants;
 
     await product.save();
 
@@ -169,7 +175,7 @@ export const updateProduct = TryCatch( async( req, res, next ) => {
 export const manageProductRecommendation = TryCatch( async( req, res, next ) => {
     const { id } = req.params;
     const { suggestedProductIds } = req.body;
-console.log( suggestedProductIds )
+
     const product = await Product.findById( id );
 
     if( !product ) return next( new ErrorHandler( "Product not found", 404 ) );
@@ -177,15 +183,19 @@ console.log( suggestedProductIds )
     if( suggestedProductIds && suggestedProductIds.length > 0 ){
         const suggestedProductIdsArray = suggestedProductIds.split( "," );
 
+        let i = 0;
+
+        while( i < product.suggestedItems.length ){
+            if( !suggestedProductIdsArray.includes( product.suggestedItems[ i ].productId.toString( ) ) ){
+                product.suggestedItems.splice( i, 1 );
+            } else {
+                i += 1;
+            }
+        }
+
         suggestedProductIdsArray.forEach( ( suggestedItemId: string ) => {
             if( product.suggestedItems.find( ( suggestedItem ) => suggestedItem.productId == suggestedItemId ) === undefined ){
                 product.suggestedItems.push( { productId: suggestedItemId } );
-            }
-        } );
-
-        product.suggestedItems.forEach( ( item, index ) => {
-            if( !suggestedProductIdsArray.includes( item.productId.toString( ) ) ){
-              product.suggestedItems.splice( index, 1 );
             }
         } );
     } else {
