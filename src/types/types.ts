@@ -56,6 +56,15 @@ export type OrderItemType = {
     price: number;
     quantity: number;
     productId: string;
+    variant: {
+        configuration: {
+            key: string;
+            value: string;
+        }[];
+        price: number;
+        stock: number;
+        _id: string;
+    } | undefined;
 }
 
 export type ShippingInfoType = {

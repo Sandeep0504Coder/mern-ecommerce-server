@@ -65,6 +65,11 @@ const orderSchema = new mongoose.Schema(
                 name: String,
                 photo: String,
                 price: Number,
+                variant: {
+                    type: Object,
+                    required: true,
+                    default: {},
+                },
             }
         ]
     },{

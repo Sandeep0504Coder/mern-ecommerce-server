@@ -87,7 +87,13 @@ export const reduceStock = ( orderItems: OrderItemType[] ) => {
         
         if( !product ) throw new Error( "Product not found" );
 
-        product.stock -= item.quantity;
+        if( typeof item.variant === "undefined" ){
+            product.stock -= item.quantity;
+        } else {
+            const selectedVariantIndex = product.variants.findIndex( ( variant ) => variant._id?.toString( ) == item.variant?._id );
+            product.variants[ selectedVariantIndex ].stock -= item.quantity;
+        }
+        
         await product.save( );
     } );
 }

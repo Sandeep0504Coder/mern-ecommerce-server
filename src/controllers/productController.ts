@@ -7,8 +7,6 @@ import { myCache } from "../app.js";
 import { deleteFromCloudinary, findAverageRatings, invalidateCache, uploadToCloudinary } from "../utils/features.js";
 import { Review } from "../models/reviewModel.js";
 import { User } from "../models/userModel.js";
-import { ObjectId } from "mongoose";
-import { Types } from "mongoose";
 
 //Revalidate on new, update, delete product & on new order
 export const getLatestProducts = TryCatch( async( req, res, next ) => {
