@@ -85,3 +85,28 @@ export interface NewOrderRequestBody{
     total: number;
     orderItems: OrderItemType[]
 }
+
+export type NewAddressRequestBody = ShippingInfoType & {
+    name: string;
+    primaryPhone: number;
+    secondaryPhone: number;
+    address2: string;
+    isDefault: boolean;
+}
+
+export type CreateDeliveryRuleRequestBody = {
+    ruleName: string;
+    subtotalMinRange: number;
+    subtotalMaxRange: number;
+    amount: number;
+    percentage: number;
+    setDeliveryFeeTo: string;
+}
+
+export type CreateSystemSettingRequestBody = {
+    settingCategory: string;
+    settingName: string;
+    settingUniqueName: string;
+    settingValue: string;
+    entityId?: string;
+}

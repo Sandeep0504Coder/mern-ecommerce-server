@@ -112,6 +112,7 @@ export const newOrder = TryCatch( async( req: Request<{},{},NewOrderRequestBody>
     return res.status(201).json(
         {
             success: true,
+            orderId: order._id,
             message: "Order Placed Successfully"
         }
     );
