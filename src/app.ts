@@ -16,6 +16,8 @@ import paymentRoute from "./routes/paymentRoute.js"
 import dashboardRoute from "./routes/statsRoute.js"
 import deliveryRulesRoute from "./routes/deliveryRulesRoute.js"
 import systemSettingRoute from "./routes/systemSettingRoute.js"
+import regionRoute from "./routes/regionRoute.js"
+import homePageContentRoute from "./routes/homePageContentRoute.js"
 
 
 config( { path: "./.env" } );
@@ -53,6 +55,8 @@ app.use( "/api/v1/payment", paymentRoute );
 app.use( "/api/v1/dashboard", dashboardRoute );
 app.use( "/api/v1/deliveryRule", deliveryRulesRoute );
 app.use( "/api/v1/systemSetting", systemSettingRoute );
+app.use( "/api/v1/region", regionRoute );
+app.use( "/api/v1/homePageContent", homePageContentRoute );
 
 app.use( "/uploads", express.static( "uploads" ) );
 app.use( errorMiddleware );

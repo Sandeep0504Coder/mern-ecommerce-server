@@ -26,7 +26,7 @@ export const newAddress = TryCatch(
             await Address.updateMany( { isDefault: true }, { isDefault: false } );
         }
 
-        await Address.create({
+        const newAddress = await Address.create({
             name,
             primaryPhone,
             secondaryPhone,
@@ -43,6 +43,7 @@ export const newAddress = TryCatch(
         return res.status( 201 ).json({
             success: true,
             message: "Delivery address created successfully.",
+            addressId: newAddress._id,
         });
     }
 );

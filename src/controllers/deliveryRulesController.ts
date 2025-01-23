@@ -87,7 +87,7 @@ export const updateDeliveryRule = TryCatch(
 
         if( subtotalMinRange ) deliveryRule.subtotalMinRange = subtotalMinRange;
 
-        if( subtotalMaxRange ) deliveryRule.subtotalMaxRange = subtotalMaxRange;
+        deliveryRule.subtotalMaxRange = subtotalMaxRange;
 
         if( amount ) deliveryRule.amount = amount;
 

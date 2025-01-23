@@ -1,4 +1,6 @@
 import { NextFunction, Request, Response } from "express";
+import mongoose from "mongoose";
+import { ObjectId } from "mongoose";
 
 export interface NewUserRequestBody {
     name: string;
@@ -22,6 +24,11 @@ export interface NewProductRequestBody {
     stock: number;
     description: string;
     variants: string;
+}
+
+export type NewHomePageContentRequestBody = {
+    promotionalText: string;
+    productSections: string;
 }
 
 export type SearchRequestQuery = {
@@ -109,4 +116,55 @@ export type CreateSystemSettingRequestBody = {
     settingUniqueName: string;
     settingValue: string;
     entityId?: string;
+}
+
+export type CreateCountryRequestBody = {
+    countryName: string;
+    countryAbbreviation: string;
+}
+
+export type Product = {
+    name: string;
+    photos: {
+        public_id: string;
+        url: string;
+    }[];
+    category: string;
+    price: number;
+    _id: mongoose.Types.ObjectId;
+    variants: ProductVariantType[];
+    stock: number;
+}
+
+export type ProductVariantType = {
+    configuration: Configuration[];
+    price: number;
+    stock: number;
+    _id?: mongoose.Types.ObjectId;
+}
+
+export interface Configuration {
+    key: string;
+    value: string;
+}
+interface Filter {
+    key: string;
+    value: string;
+}
+export type ProductSectionType = {
+    _id: string;
+    sectionLabel: string;
+    filters: Filter[];
+    products?: Product[]; // Optional since we'll add this dynamically
+}
+
+export type HomePageContentType = {
+    _id: string;
+    banners: {
+      public_id: string;
+      url: string;
+      _id: string;
+    }[];
+    productSections: ProductSectionType[];
+    promotionalText: string;
 }

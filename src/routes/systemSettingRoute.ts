@@ -5,7 +5,7 @@ import { adminOnly } from "../middlewares/auth.js";
 const app = express.Router();
 
 //route - api/v1/systemSetting/new
-app.post( "/new", adminOnly, createSystemSetting );
+// app.post( "/new", adminOnly, createSystemSetting );
 
 //route - api/v1/systemSetting/all
 app.get( "/all", adminOnly, getSystemSettings );
