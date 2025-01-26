@@ -143,9 +143,12 @@ export const updateProduct = TryCatch( async( req, res, next ) => {
         
         await deleteFromCloudinary( product.photos.map( ( photo ) => photo.public_id ) );
 
-        for( let i = 0; i < product.photos.length; i++ ){
+        let i = 0;
+
+        while (  i < product.photos.length ){
             product.photos.pop();
         }
+
         photosURL.forEach( ( photoURL ) => {
             product.photos.push( photoURL );
         } );

@@ -93,7 +93,7 @@ export const deleteAddress = TryCatch(
         
         await address.deleteOne( );
 
-        if( isDefault ) await Address.updateOne( {}, { isDefault: true } );
+        if( isDefault ) await Address.updateOne( { user: user._id }, { isDefault: true } );
 
         return res.status(200).json({
             success: true,
@@ -138,7 +138,7 @@ export const updateAddress = TryCatch(
         if( isDefault && !deliveryAddress.isDefault ){
             await Address.updateMany( { isDefault: true }, { isDefault: false } );
         } else if( !isDefault && deliveryAddress.isDefault ){
-            await Address.updateOne( {}, { isDefault: true } );
+            await Address.updateOne( { user: user._id }, { isDefault: true } );
         }
 
         deliveryAddress.isDefault = isDefault;

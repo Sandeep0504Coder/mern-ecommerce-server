@@ -4,6 +4,7 @@ import { myCache } from "../app.js";
 import { Product } from "../models/productModel.js";
 import { v2 as cloudinary, UploadApiResponse } from "cloudinary"
 import { Review } from "../models/reviewModel.js";
+import { UploadApiOptions } from "cloudinary";
 
 export const findAverageRatings = async( productId: mongoose.Types.ObjectId ) => {
     let sumOfRatings = 0;
@@ -22,23 +23,33 @@ export const findAverageRatings = async( productId: mongoose.Types.ObjectId ) =>
 
 const getBase64 = ( file: Express.Multer.File ) => `data:${file.mimetype};base64,${file.buffer.toString( "base64" )}`;
 
-export const uploadToCloudinary = async( files: Express.Multer.File[] ) => {
-    const promises = files.map( async( file ) => {
-        return new Promise<UploadApiResponse>( ( resolve, reject ) => {
-            cloudinary.uploader.upload( getBase64( file ), ( error, result ) => {
-                if( error ) return reject( error );
-                resolve( result! );
-            } );
-        } );
-    } );
+export const uploadToCloudinary = async (files: Express.Multer.File[]) => {
+    const promises = files.map(async (file) => {
+        return new Promise<UploadApiResponse>((resolve, reject) => {
+            // Set the resource type explicitly
+            const options: UploadApiOptions = file.mimetype.startsWith("video/")
+                ? { resource_type: "video" }
+                : { resource_type: "image" };
 
-    const result = await Promise.all( promises );
+            cloudinary.uploader.upload(
+                getBase64(file),
+                options,
+                (error, result) => {
+                    if (error) return reject(error);
+                    resolve(result!);
+                }
+            );
+        });
+    });
 
-    return result.map( ( i ) => ( {
+    const result = await Promise.all(promises);
+
+    return result.map((i) => ({
         public_id: i.public_id,
         url: i.secure_url,
-    } ) );
-}
+    }));
+};
+
 
 export const deleteFromCloudinary = async( publicIds: string[] ) => {
     const promises = publicIds.map( ( publicId ) => {

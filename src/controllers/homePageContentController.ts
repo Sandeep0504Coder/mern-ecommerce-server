@@ -45,11 +45,23 @@ export const createHomePageContent = TryCatch( async( req: Request<{}, {}, NewHo
 
 export const updateHomePageContent = TryCatch( async( req, res, next ) => {
     const { id } = req.params;
-    const { promotionalText } = req.body;
-    const banners = req.files as Express.Multer.File[] | undefined;
-    // Parse the variants string
-    console.log(banners)
-    const productSections = JSON.parse( req.body.productSections );
+    const { promotionalText, promotionalTextLabel } = req.body;
+
+     // Narrowing req.files type
+    const files = req.files as Express.Multer.File[] | { [fieldname: string]: Express.Multer.File[] } | undefined;
+
+    let banners: Express.Multer.File[] | undefined;
+    let promotionalVideo: Express.Multer.File | undefined;
+
+    if (files) {
+        if (!Array.isArray(files)) {
+            banners = files["banners"];
+            promotionalVideo = files["promotionalVideo"]?.[0];
+        }
+    }
+
+    // Parse the productSections string
+    const productSections = req.body.productSections ? JSON.parse(req.body.productSections) : undefined;
 
     const homePageContent = await HomePageContent.findById( id );
 
@@ -60,15 +72,32 @@ export const updateHomePageContent = TryCatch( async( req, res, next ) => {
         
         await deleteFromCloudinary( homePageContent.banners.map( ( banner ) => banner.public_id ) );
 
-        for( let i = 0; i < homePageContent.banners.length; i++ ){
+        let i = 0;
+
+        while( i < homePageContent.banners.length ){
             homePageContent.banners.pop();
         }
+
         bannersURL.forEach( ( bannerURL ) => {
             homePageContent.banners.push( bannerURL );
         } );
     }
 
+    // Update promotional video if provided
+    if (promotionalVideo) {
+        const promotionalVideoURL = await uploadToCloudinary([promotionalVideo]);
+
+        // Delete old promotional video from Cloudinary, if exists
+        if (homePageContent.promotionalVideo?.public_id) {
+            await deleteFromCloudinary([homePageContent.promotionalVideo.public_id]);
+        }
+
+        // Replace old promotional video with the new one
+        homePageContent.promotionalVideo = promotionalVideoURL[0];
+    }
+
     if( promotionalText ) homePageContent.promotionalText = promotionalText;
+    if( promotionalTextLabel ) homePageContent.promotionalTextLabel = promotionalTextLabel;
     if( productSections ) homePageContent.productSections = productSections;
 
     await homePageContent.save();

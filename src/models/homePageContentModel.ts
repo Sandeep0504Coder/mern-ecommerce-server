@@ -34,6 +34,20 @@ const HomePageContentSchema = new mongoose.Schema({
         type: String,
         required: [ true, "Promotional Text is required!" ]
     },
+    promotionalTextLabel: {
+        type: String,
+        required: [ true, "Promotional Text label is required!" ]
+    },
+    promotionalVideo: {
+        public_id: {
+            type: String,
+            required: [true, "Please enter the public id of the promotional video!"],
+        },
+        url: {
+            type: String,
+            required: [true, "Please enter the URL of the promotional video!"],
+        },
+    },
 });
 
 export const HomePageContent = mongoose.model( "HomePageContent", HomePageContentSchema );
