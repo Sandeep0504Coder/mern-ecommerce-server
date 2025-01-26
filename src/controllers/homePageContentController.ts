@@ -105,7 +105,7 @@ export const updateHomePageContent = TryCatch( async( req, res, next ) => {
     return res.status( 200 ).json(
         {
             success: true,
-            message: "Product updated Successfully"
+            message: "Home Page updated Successfully"
         }
     );
 } );
