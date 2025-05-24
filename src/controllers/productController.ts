@@ -259,6 +259,7 @@ export const getAllProducts = TryCatch( async( req: Request<{},{},{},SearchReque
     if( category ) baseQuery.category = category;
 
     const productsPromise = Product.find( baseQuery )
+        .populate( "suggestedItems.productId", "_id name category price stock photos variants" )
         .sort( sort && { price: sort==="asc" ? 1 : -1 } )
         .limit( limit )
         .skip( skip );
