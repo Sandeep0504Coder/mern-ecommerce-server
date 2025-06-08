@@ -33,7 +33,8 @@ export type NewHomePageContentRequestBody = {
 
 export type SearchRequestQuery = {
     search?: string;
-    price?: string;
+    minPrice?: string;
+    maxPrice?: string;
     category?: string;
     sort?: string;
     page?: string;
@@ -44,7 +45,7 @@ export interface BaseQuery{
         $regex: string;
         $options: string;
     };
-    price?: { $lte: number };
+    price?: { $lte?: number, $gte?: number };
     category?: string;
 }
 
