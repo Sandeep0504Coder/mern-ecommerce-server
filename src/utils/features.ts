@@ -72,7 +72,7 @@ export const connectDB = ( uri: string )=>{
     });
 }
 
-export const invalidateCache = ( { product, order, admin, userId, orderId, productIdArray }: invalidateCacheProps ) => {
+export const invalidateCache = ( { product, order, homePageContent, admin, userId, orderId, productIdArray }: invalidateCacheProps ) => {
     if( product ){
         const productKeys: string[] = [ "latest-products", "product-categories", "all-products" ];
 
@@ -85,6 +85,10 @@ export const invalidateCache = ( { product, order, admin, userId, orderId, produ
         const orderKeys: string[] = [ "all-orders", `my-orders-${userId}`, `order-${orderId}` ];
 
         myCache.del( orderKeys );
+    }
+
+    if( homePageContent ){
+        myCache.del( 'home-page-content' );
     }
 
     if( admin ){

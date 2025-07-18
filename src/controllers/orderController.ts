@@ -104,6 +104,7 @@ export const newOrder = TryCatch( async( req: Request<{},{},NewOrderRequestBody>
     invalidateCache( {
         product: true,
         order: true,
+        homePageContent: true,
         admin: true,
         userId: user,
         productIdArray: order.orderItems.map( ( item ) => String( item.productId ) ),

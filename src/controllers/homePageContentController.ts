@@ -4,10 +4,11 @@ import { TryCatch } from "../middlewares/error.js";
 import ErrorHandler from "../utils/utility-class.js";
 import { DeliveryRule } from "../models/deliveryRuleModel.js";
 import { Region } from "../models/regionModel.js";
-import { deleteFromCloudinary, uploadToCloudinary } from "../utils/features.js";
+import { deleteFromCloudinary, invalidateCache, uploadToCloudinary } from "../utils/features.js";
 import { HomePageContent } from "../models/homePageContentModel.js";
 import { Document } from "mongoose";
 import { Product } from "../models/productModel.js";
+import { myCache } from "../app.js";
 
 
 export const createHomePageContent = TryCatch( async( req: Request<{}, {}, NewHomePageContentRequestBody>, res, next ) => {
@@ -34,6 +35,8 @@ export const createHomePageContent = TryCatch( async( req: Request<{}, {}, NewHo
         banners: bannersURL,
         productSections: productSections,
     } );
+
+    invalidateCache( { homePageContent: true } );
 
     return res.status( 201 ).json(
         {
@@ -102,6 +105,8 @@ export const updateHomePageContent = TryCatch( async( req, res, next ) => {
 
     await homePageContent.save();
 
+    invalidateCache( { homePageContent: true } );
+
     return res.status( 200 ).json(
         {
             success: true,
@@ -138,42 +143,49 @@ export const getHomePageContentDetails = TryCatch( async( req, res, next ) => {
 
 export const getHeroSectionData = TryCatch( async( req, res, next ) => {
     // Fetch home page content from the database
-    const homePageContent: HomePageContentType | null = await HomePageContent.findOne()
-        .select('-__v -createdAt -updatedAt')
-        .lean();
+    let homePageContent: HomePageContentType | null;
+    
+    if( myCache.has( "home-page-content" ) ){
+        homePageContent = JSON.parse( myCache.get( "home-page-content" ) as string );
+    } else {
+        homePageContent = await HomePageContent.findOne()
+            .select('-__v -createdAt -updatedAt')
+            .lean();
 
-    if (!homePageContent) {
-        return res.status(404).json({
-            success: false,
-            message: 'Home page content not found',
-        });
-    }
-
-    // Iterate through productSections and fetch filtered products
-    const productSectionsWithProducts: ProductSectionType[] = await Promise.all(
-        homePageContent.productSections.map(async (section): Promise<ProductSectionType> => {
-            const query: Record<string, string> = {};
-
-            // Build query for filters
-            section.filters.forEach((filter) => {
-                query[filter.key] = filter.value.includes( "{" ) ? JSON.parse( filter.value ) : filter.value;
+        if (!homePageContent) {
+            return res.status(404).json({
+                success: false,
+                message: 'Home page content not found',
             });
-            
-            // Fetch products based on query
-            const products = await Product.find(query)
-                .limit(5)
-                .select("_id name price photos category variants stock")
-                .lean();
+        }
 
-            return {
-                ...section,
-                products,
-            };
-        })
-    );
+        // Iterate through productSections and fetch filtered products
+        const productSectionsWithProducts: ProductSectionType[] = await Promise.all(
+            homePageContent.productSections.map(async (section): Promise<ProductSectionType> => {
+                const query: Record<string, string> = {};
 
-    // Update homePageContent with the filtered products
-    homePageContent.productSections = productSectionsWithProducts;
+                // Build query for filters
+                section.filters.forEach((filter) => {
+                    query[filter.key] = filter.value.includes( "{" ) ? JSON.parse( filter.value ) : filter.value;
+                });
+                
+                // Fetch products based on query
+                const products = await Product.find(query)
+                    .limit(5)
+                    .select("_id name price photos category variants stock")
+                    .lean();
+
+                return {
+                    ...section,
+                    products,
+                };
+            })
+        );
+
+        // Update homePageContent with the filtered products
+        homePageContent.productSections = productSectionsWithProducts;
+        myCache.set( "home-page-content", JSON.stringify( homePageContent ) );
+    }
 
     // Send response
     return res.status(200).json({

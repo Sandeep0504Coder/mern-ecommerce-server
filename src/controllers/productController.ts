@@ -117,7 +117,7 @@ export const createProduct = TryCatch( async( req: Request<{}, {}, NewProductReq
         variants,
     } );
 
-    invalidateCache( { product: true, admin: true } );
+    invalidateCache( { product: true, homePageContent: true, admin: true } );
 
     return res.status( 201 ).json(
         {
@@ -163,7 +163,7 @@ export const updateProduct = TryCatch( async( req, res, next ) => {
 
     await product.save();
 
-    invalidateCache( { product: true, productIdArray: [ String( product._id ) ], admin: true } );
+    invalidateCache( { product: true, homePageContent: true, productIdArray: [ String( product._id ) ], admin: true } );
 
     return res.status( 200 ).json(
         {
@@ -227,7 +227,7 @@ export const deleteProduct = TryCatch( async( req, res, next ) => {
 
     await Product.findByIdAndDelete( id );
     
-    invalidateCache( { product: true, productIdArray: [ String( product._id ) ], admin: true } );
+    invalidateCache( { product: true, homePageContent: true, productIdArray: [ String( product._id ) ], admin: true } );
 
     return res.status( 200 ).json(
         {
